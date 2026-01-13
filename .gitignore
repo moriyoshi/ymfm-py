@@ -1,0 +1,41 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+*.dylib
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+*.egg
+
+# Virtual environments
+.venv/
+venv/
+
+# CMake
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+compile_commands.json
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Output directory
+output/
+
+# Files used by coding agents
+PLAN.md
+PROGRESS.md
+
+# Automatically generated on build
+src/ymfm/_version.py
