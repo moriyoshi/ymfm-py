@@ -68,8 +68,8 @@ Covers: OPL, OPLL, OPN, OPM, OPQ, and OPZ families.
 WAV to VGM converter using CSM (Composite Sinusoidal Modeling) voice synthesis. Extracts 4 formant frequencies from audio and generate a VGM file that reproduces them on FM chips using the true CSM hardware mode (with manual key-on). Based on [csm_voice_encode_synthesis_python](https://github.com/yas-sim/csm_voice_encode_synthesis_python) by Yasunori Shimura.
 
 ```bash
-python examples/csm.py -i input.wav [output.vgm] [-c CHIP]
-python examples/csm.py --test [-c CHIP] [output.vgm]  # Generate test VGM
+python examples/csm.py [-c CHIP] [-i input.wav] output.vgm
+python examples/csm.py --test [-c CHIP] output.vgm  # Generate test VGM
 ```
 
 Supported chips: YM2151, YM2203, YM2608, YM3526, YM3812, Y8950
