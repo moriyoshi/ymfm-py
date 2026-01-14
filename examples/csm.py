@@ -21,7 +21,7 @@ Supported chips:
 
 CSM mode specifics:
   - YM2151: Register 0x14 bit 7 enables CSM, Timer A overflow keys all channels
-  - YM2203/YM2608: Register 0x27 bits 7-6=10 enables CSM on channel 3
+  - YM2203/YM2608: Register 0x27 bits 6 enables CSM on channel 3
   - YM3526/YM3812/Y8950: Register 0x08 bit 7 enables CSW, Timer 1 overflow keys all channels
 
 Usage:
