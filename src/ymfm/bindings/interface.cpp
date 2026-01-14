@@ -2,9 +2,6 @@
 
 namespace ymfm_py {
 
-// Define the static member from SampleBuffer (common.hpp)
-int32_t SampleBuffer::empty_buffer[1] = {0};
-
 void bind_interface(py::module_& m) {
     // Bind access_class enum
     py::enum_<ymfm::access_class>(m, "AccessClass")
