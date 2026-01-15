@@ -78,4 +78,4 @@ Supported chips: YM2151, YM2203, YM2608, YM3526, YM3812, Y8950
 
 BSD-3-Clause
 
-Both pymfm and the bundled ymfm library are licensed under the BSD 3-Clause License. The example code in `examples/csm.py` is derived from csm_voice_encode_synthesis_python by Yasunori Shimura under the MIT License. See the [LICENSE](LICENSE) file for details.
+Both ymfm-py and the bundled ymfm library are licensed under the BSD 3-Clause License. The example code in `examples/csm.py` is derived from csm_voice_encode_synthesis_python by Yasunori Shimura under the MIT License. See the [LICENSE](LICENSE) file for details.

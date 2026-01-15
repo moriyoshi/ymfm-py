@@ -56,7 +56,7 @@ class ChipType(IntEnum):
     YMF262 = 10
 
 
-# Mapping from ChipType to pymfm chip class
+# Mapping from ChipType to ymfm-py chip class
 CHIP_CLASSES: dict[ChipType, ChipFactory] = {
     ChipType.YM2149: ymfm.YM2149,
     ChipType.YM2151: ymfm.YM2151,
