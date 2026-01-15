@@ -4,6 +4,7 @@ SSG (Software-controlled Sound Generator) chips include:
 - YM2149 (SSG/PSG) - 3 square wave channels + noise (AY-3-8910 compatible)
 """
 
+import numpy as np
 from conftest import ChipTestHelper
 
 import ymfm
@@ -216,3 +217,26 @@ class TestYM2149:
         for _ in range(5):
             chip.reset()
             chip.generate(10)
+
+    def test_generate_into(self):
+        """Test generate_into method."""
+        chip = ymfm.YM2149(clock=2000000)
+        ChipTestHelper.test_generate_into(chip)
+
+    def test_generate_into_matches_generate(self):
+        """Test that generate_into produces same output as generate."""
+        ChipTestHelper.test_generate_into_matches_generate(ymfm.YM2149, 2000000)
+
+    def test_generate_into_zero_samples(self):
+        """Test generate_into with zero-length buffer."""
+        chip = ymfm.YM2149(clock=2000000)
+        buffer = np.zeros((0, 3), dtype=np.int32)
+        result = chip.generate_into(buffer)
+        assert result == 0
+
+    def test_generate_into_large_buffer(self):
+        """Test generate_into with large buffer."""
+        chip = ymfm.YM2149(clock=2000000)
+        buffer = np.zeros((10000, 3), dtype=np.int32)
+        result = chip.generate_into(buffer)
+        assert result == 10000

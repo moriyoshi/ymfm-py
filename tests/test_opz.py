@@ -4,6 +4,7 @@ OPZ (FM Operator Type-Z) chips include:
 - YM2414 (OPZ) - 8 FM channels, 4 operators (TX81Z/DX11 synthesizer)
 """
 
+import numpy as np
 from conftest import ChipTestHelper
 
 import ymfm
@@ -140,3 +141,26 @@ class TestYM2414:
         for _ in range(5):
             chip.reset()
             chip.generate(10)
+
+    def test_generate_into(self):
+        """Test generate_into method."""
+        chip = ymfm.YM2414(clock=3579545)
+        ChipTestHelper.test_generate_into(chip)
+
+    def test_generate_into_matches_generate(self):
+        """Test that generate_into produces same output as generate."""
+        ChipTestHelper.test_generate_into_matches_generate(ymfm.YM2414, 3579545)
+
+    def test_generate_into_zero_samples(self):
+        """Test generate_into with zero-length buffer."""
+        chip = ymfm.YM2414(clock=3579545)
+        buffer = np.zeros((0, 2), dtype=np.int32)
+        result = chip.generate_into(buffer)
+        assert result == 0
+
+    def test_generate_into_large_buffer(self):
+        """Test generate_into with large buffer."""
+        chip = ymfm.YM2414(clock=3579545)
+        buffer = np.zeros((10000, 2), dtype=np.int32)
+        result = chip.generate_into(buffer)
+        assert result == 10000

@@ -14,6 +14,7 @@ OPL (FM Operator Type-L) chips include:
 """
 
 import pytest
+import numpy as np
 from conftest import ChipTestHelper
 
 import ymfm
@@ -31,7 +32,7 @@ OPL_CHIPS = {
 }
 
 OPL3_CHIPS = {
-    "YMF289B": (ymfm.YMF289B, 14318180, 2),
+    "YMF289B": (ymfm.YMF289B, 14318180, 4),
     "YMF278B": (ymfm.YMF278B, 33868800, 6),
 }
 
@@ -233,13 +234,13 @@ class TestYMF289B:
 
     def test_create(self):
         """Test chip creation."""
-        ChipTestHelper.test_basic_instantiation(ymfm.YMF289B, 14318180, 2)
+        ChipTestHelper.test_basic_instantiation(ymfm.YMF289B, 14318180, 4)
 
     def test_generate(self):
         """Test sample generation."""
         chip = ymfm.YMF289B(clock=14318180)
         samples = chip.generate(100)
-        assert samples.shape == (100, 2)
+        assert samples.shape == (100, 4)
 
     def test_write_address_hi(self):
         """Test high address register."""
@@ -389,3 +390,24 @@ class TestOPLCommon:
         for _ in range(5):
             opl_chip.reset()
             opl_chip.generate(10)
+
+    def test_generate_into(self, opl_chip):
+        """Test generate_into method."""
+        ChipTestHelper.test_generate_into(opl_chip)
+
+    def test_generate_into_matches_generate(self, opl_chip_name):
+        """Test that generate_into produces same output as generate."""
+        chip_class, clock, _ = ALL_OPL_CHIPS[opl_chip_name]
+        ChipTestHelper.test_generate_into_matches_generate(chip_class, clock)
+
+    def test_generate_into_zero_samples(self, opl_chip):
+        """Test generate_into with zero-length buffer."""
+        buffer = np.zeros((0, opl_chip.outputs), dtype=np.int32)
+        result = opl_chip.generate_into(buffer)
+        assert result == 0
+
+    def test_generate_into_large_buffer(self, opl_chip):
+        """Test generate_into with large buffer."""
+        buffer = np.zeros((10000, opl_chip.outputs), dtype=np.int32)
+        result = opl_chip.generate_into(buffer)
+        assert result == 10000

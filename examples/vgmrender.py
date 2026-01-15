@@ -72,6 +72,10 @@ CHIP_CLASSES: dict[ChipType, ChipFactory] = {
 }
 
 
+# Default batch buffer size for generate_into optimization
+DEFAULT_BATCH_BUFFER_SIZE = 4096
+
+
 @dataclass
 class VgmChip:
     """Wrapper for a VGM chip instance."""
@@ -95,13 +99,20 @@ class VgmChip:
     last_output: memoryview | np.ndarray[tuple[int, int], np.dtype[np.int32]] | None = (
         None
     )
+    # Pre-allocated buffer for generate_into optimization
+    _batch_buffer: np.ndarray | None = field(default=None, repr=False)
 
     def __post_init__(self) -> None:
         sample_rate = self.chip.sample_rate
+        outputs = self.chip.outputs
         # step is in 32.32 fixed point format
         self.step = (1 << 32) // sample_rate
         self.pos = 0
         self.last_output = self.chip.generate(1)
+        # Pre-allocate batch buffer for generate_into
+        self._batch_buffer = np.zeros(
+            (DEFAULT_BATCH_BUFFER_SIZE, outputs), dtype=np.int32
+        )
 
     @property
     def sample_rate(self) -> int:
@@ -186,12 +197,22 @@ class VgmChip:
         """Check if there are pending register writes."""
         return len(self.queue) > 0
 
+    def _ensure_buffer_size(self, num_samples: int) -> np.ndarray:
+        """Ensure the batch buffer is large enough, resizing if needed."""
+        outputs = self.chip.outputs
+        if self._batch_buffer is None or len(self._batch_buffer) < num_samples:
+            # Grow buffer with some headroom to avoid frequent reallocations
+            new_size = max(num_samples, DEFAULT_BATCH_BUFFER_SIZE)
+            self._batch_buffer = np.zeros((new_size, outputs), dtype=np.int32)
+        return self._batch_buffer
+
     def generate_batch_no_writes(
         self, count: int, output_step: int, output_start: int
     ) -> tuple[np.ndarray, np.ndarray]:
         """Generate a batch of output samples when no writes are pending.
 
-        This is an optimized version that generates all native samples at once.
+        This is an optimized version that generates all native samples at once
+        using generate_into() to avoid memory allocation in the hot path.
         Only call this when self.queue is empty!
 
         Args:
@@ -223,12 +244,16 @@ class VgmChip:
         if self.pos <= output_end:
             num_native = (output_end - self.pos) // self.step + 1
 
-        # Generate all native samples at once
+        # Generate all native samples at once using pre-allocated buffer
         if num_native > 0:
-            native_output = self.chip.generate(num_native)
-            native_array = np.asarray(native_output, dtype=np.int32).reshape(
-                num_native, outputs
-            )
+            # Ensure buffer is large enough and get a view of the needed portion
+            buffer = self._ensure_buffer_size(num_native)
+            native_view = buffer[:num_native]
+
+            # Generate directly into the pre-allocated buffer (avoids allocation)
+            self.chip.generate_into(native_view)
+            native_array = native_view
+
             self.pos += num_native * self.step
             self.last_output = native_array[-1:, :].copy()
         else:

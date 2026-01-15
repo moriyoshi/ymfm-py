@@ -35,6 +35,10 @@ public:
         return generate_samples<ymfm::ym2414, OUTPUTS>(m_chip, num_samples);
     }
 
+    uint32_t generate_into(py::buffer buffer) {
+        return generate_samples_into<ymfm::ym2414, OUTPUTS>(m_chip, buffer);
+    }
+
     uint32_t sample_rate() const { return m_chip.sample_rate(m_clock); }
     uint32_t clock() const { return m_clock; }
 
@@ -70,6 +74,13 @@ constexpr const char* YM2414Chip::CHIP_DESCRIPTION;
         "    num_samples: Number of samples to generate (default: 1)\n\n" \
         "Returns:\n" \
         "    memoryview of int32 with interleaved samples (length = num_samples * outputs)") \
+    .def("generate_into", &cls::generate_into, py::arg("buffer"), \
+        "Generate audio samples into a provided buffer.\n\n" \
+        "Args:\n" \
+        "    buffer: Writable buffer with int32 dtype. Can be 1D (length must be\n" \
+        "            divisible by outputs) or 2D with shape (N, outputs).\n\n" \
+        "Returns:\n" \
+        "    Number of samples generated") \
     .def_property_readonly("sample_rate", &cls::sample_rate, "Output sample rate in Hz") \
     .def_property_readonly("clock", &cls::clock, "Input clock frequency in Hz") \
     .def_property_readonly("outputs", [](const cls&) { return cls::OUTPUTS; }, "Number of output channels") \

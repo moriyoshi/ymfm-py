@@ -143,6 +143,72 @@ py::memoryview generate_samples(ChipType& chip, uint32_t num_samples) {
     return py::reinterpret_steal<py::memoryview>(py::handle(mv));
 }
 
+// Template function to generate samples into a user-provided buffer
+// Accepts any object implementing the buffer protocol (numpy arrays, bytearrays, etc.)
+// Buffer must be writable and contain int32 data with shape (num_samples, num_outputs)
+// or be a 1D buffer with length num_samples * num_outputs
+// Returns the number of samples actually generated
+template<typename ChipType, size_t NumOutputs>
+uint32_t generate_samples_into(ChipType& chip, py::buffer buffer) {
+    // Request buffer info with write access
+    py::buffer_info info = buffer.request(true);  // true = writable
+
+    // Validate format - must be int32
+    if (info.format != py::format_descriptor<int32_t>::format() && info.format != "i") {
+        throw py::value_error("Buffer must have int32 format (format code 'i')");
+    }
+
+    // Validate item size
+    if (info.itemsize != sizeof(int32_t)) {
+        throw py::value_error("Buffer item size must be 4 bytes (int32)");
+    }
+
+    // Calculate number of samples based on buffer shape
+    size_t num_samples = 0;
+
+    if (info.ndim == 1) {
+        // 1D buffer: length must be divisible by num_outputs
+        if (info.shape[0] % NumOutputs != 0) {
+            throw py::value_error("1D buffer length must be divisible by outputs (" +
+                                  std::to_string(NumOutputs) + ")");
+        }
+        // Check for contiguous buffer
+        if (info.strides[0] != sizeof(int32_t)) {
+            throw py::value_error("Buffer must be contiguous");
+        }
+        num_samples = info.shape[0] / NumOutputs;
+    } else if (info.ndim == 2) {
+        // 2D buffer: shape must be (N, num_outputs)
+        if (static_cast<size_t>(info.shape[1]) != NumOutputs) {
+            throw py::value_error("Buffer second dimension must equal outputs (" +
+                                  std::to_string(NumOutputs) + "), got " +
+                                  std::to_string(info.shape[1]));
+        }
+        // Check for C-contiguous (row-major) layout
+        if (info.strides[1] != sizeof(int32_t) ||
+            info.strides[0] != static_cast<Py_ssize_t>(NumOutputs * sizeof(int32_t))) {
+            throw py::value_error("Buffer must be C-contiguous (row-major)");
+        }
+        num_samples = info.shape[0];
+    } else {
+        throw py::value_error("Buffer must be 1D or 2D");
+    }
+
+    if (num_samples == 0) {
+        return 0;
+    }
+
+    // Release GIL during sample generation for better multi-threading
+    // Since the buffer is validated to have the correct shape (N, NumOutputs) and is
+    // C-contiguous, we can directly cast to the chip's output_data type and call generate
+    {
+        py::gil_scoped_release release;
+        chip.generate(reinterpret_cast<typename ChipType::output_data*>(info.ptr), num_samples);
+    }
+
+    return static_cast<uint32_t>(num_samples);
+}
+
 // Template function to save chip state to bytes
 template<typename ChipType>
 py::bytes save_chip_state(ChipType& chip) {

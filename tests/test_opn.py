@@ -12,6 +12,7 @@ OPN (FM Operator Type-N) chips include:
 """
 
 import pytest
+import numpy as np
 from conftest import ChipTestHelper
 
 import ymfm
@@ -440,6 +441,27 @@ class TestOPNCommon:
         for _ in range(5):
             opn_chip.reset()
             opn_chip.generate(10)
+
+    def test_generate_into(self, opn_chip):
+        """Test generate_into method."""
+        ChipTestHelper.test_generate_into(opn_chip)
+
+    def test_generate_into_matches_generate(self, opn_chip_name):
+        """Test that generate_into produces same output as generate."""
+        chip_class, clock, _ = OPN_CHIPS[opn_chip_name]
+        ChipTestHelper.test_generate_into_matches_generate(chip_class, clock)
+
+    def test_generate_into_zero_samples(self, opn_chip):
+        """Test generate_into with zero-length buffer."""
+        buffer = np.zeros((0, opn_chip.outputs), dtype=np.int32)
+        result = opn_chip.generate_into(buffer)
+        assert result == 0
+
+    def test_generate_into_large_buffer(self, opn_chip):
+        """Test generate_into with large buffer."""
+        buffer = np.zeros((10000, opn_chip.outputs), dtype=np.int32)
+        result = opn_chip.generate_into(buffer)
+        assert result == 10000
 
 
 # =============================================================================

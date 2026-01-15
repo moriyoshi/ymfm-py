@@ -210,3 +210,24 @@ class TestOPMCommon:
         for _ in range(5):
             opm_chip.reset()
             opm_chip.generate(10)
+
+    def test_generate_into(self, opm_chip):
+        """Test generate_into method."""
+        ChipTestHelper.test_generate_into(opm_chip)
+
+    def test_generate_into_matches_generate(self, opm_chip_name):
+        """Test that generate_into produces same output as generate."""
+        chip_class, clock, _ = OPM_CHIPS[opm_chip_name]
+        ChipTestHelper.test_generate_into_matches_generate(chip_class, clock)
+
+    def test_generate_into_zero_samples(self, opm_chip):
+        """Test generate_into with zero-length buffer."""
+        buffer = np.zeros((0, opm_chip.outputs), dtype=np.int32)
+        result = opm_chip.generate_into(buffer)
+        assert result == 0
+
+    def test_generate_into_large_buffer(self, opm_chip):
+        """Test generate_into with large buffer."""
+        buffer = np.zeros((10000, opm_chip.outputs), dtype=np.int32)
+        result = opm_chip.generate_into(buffer)
+        assert result == 10000

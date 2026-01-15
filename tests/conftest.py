@@ -1,5 +1,6 @@
 """Shared pytest fixtures and utilities for ymfm-py tests."""
 
+import array
 import sys
 from pathlib import Path
 
@@ -98,3 +99,36 @@ class ChipTestHelper:
         chip.reset()
         samples = chip.generate(100)
         assert samples is not None
+
+    @staticmethod
+    def test_generate_into(chip, num_samples=100):
+        """Test generate_into with various buffer types."""
+        # Test with 2D numpy array
+        buffer_2d = np.zeros((num_samples, chip.outputs), dtype=np.int32)
+        result = chip.generate_into(buffer_2d)
+        assert result == num_samples
+
+        # Test with 1D numpy array
+        buffer_1d = np.zeros(num_samples * chip.outputs, dtype=np.int32)
+        result = chip.generate_into(buffer_1d)
+        assert result == num_samples
+
+        # Test with array.array
+        buffer_arr = array.array("i", [0] * (num_samples * chip.outputs))
+        result = chip.generate_into(buffer_arr)
+        assert result == num_samples
+
+        return buffer_2d
+
+    @staticmethod
+    def test_generate_into_matches_generate(chip_class, clock, num_samples=100):
+        """Test that generate_into produces same output as generate."""
+        # Use fresh instances for deterministic comparison
+        chip1 = chip_class(clock=clock)
+        samples_direct = np.array(chip1.generate(num_samples))
+
+        chip2 = chip_class(clock=clock)
+        buffer = np.zeros((num_samples, chip2.outputs), dtype=np.int32)
+        chip2.generate_into(buffer)
+
+        np.testing.assert_array_equal(buffer, samples_direct)

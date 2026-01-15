@@ -5,7 +5,11 @@ Tests cover:
 - MemoryInterface class
 - SsgOverride class
 - AccessClass enum
+- generate_into error handling
 """
+
+import numpy as np
+import pytest
 
 import ymfm
 
@@ -275,3 +279,83 @@ class TestIntegration:
             assert samples1.shape == (100, chip1.outputs)
             assert samples2.shape == (100, chip2.outputs)
             assert samples3.shape == (100, chip3.outputs)
+
+
+# =============================================================================
+# generate_into Error Handling Tests
+# =============================================================================
+
+
+class TestGenerateIntoErrors:
+    """Tests for generate_into error handling."""
+
+    @pytest.fixture
+    def chip(self):
+        """Provide a test chip instance."""
+        return ymfm.YM2612(clock=7670453)
+
+    def test_wrong_dtype_float32(self, chip):
+        """Test error with wrong dtype (float32)."""
+        buffer = np.zeros((10, chip.outputs), dtype=np.float32)
+        with pytest.raises(ValueError, match="int32"):
+            chip.generate_into(buffer)
+
+    def test_wrong_dtype_float64(self, chip):
+        """Test error with wrong dtype (float64)."""
+        buffer = np.zeros((10, chip.outputs), dtype=np.float64)
+        with pytest.raises(ValueError, match="int32"):
+            chip.generate_into(buffer)
+
+    def test_wrong_dtype_int16(self, chip):
+        """Test error with wrong dtype (int16)."""
+        buffer = np.zeros((10, chip.outputs), dtype=np.int16)
+        with pytest.raises(ValueError, match="int32"):
+            chip.generate_into(buffer)
+
+    def test_wrong_dtype_int64(self, chip):
+        """Test error with wrong dtype (int64)."""
+        buffer = np.zeros((10, chip.outputs), dtype=np.int64)
+        with pytest.raises(ValueError, match="int32"):
+            chip.generate_into(buffer)
+
+    def test_wrong_2d_shape(self, chip):
+        """Test error with wrong 2D shape."""
+        wrong_outputs = chip.outputs + 1
+        buffer = np.zeros((10, wrong_outputs), dtype=np.int32)
+        with pytest.raises(ValueError, match="outputs"):
+            chip.generate_into(buffer)
+
+    def test_non_divisible_1d_length(self, chip):
+        """Test error when 1D length is not divisible by outputs."""
+        if chip.outputs > 1:
+            buffer = np.zeros(chip.outputs + 1, dtype=np.int32)
+            with pytest.raises(ValueError, match="divisible"):
+                chip.generate_into(buffer)
+
+    def test_non_contiguous_fortran_order(self, chip):
+        """Test error with non-contiguous (Fortran-order) array."""
+        if chip.outputs == 1:
+            pytest.skip("Fortran order is C-contiguous for single-output chips")
+        buffer = np.zeros((10, chip.outputs), dtype=np.int32, order="F")
+        with pytest.raises(ValueError, match="contiguous"):
+            chip.generate_into(buffer)
+
+    def test_non_contiguous_slice(self, chip):
+        """Test error with non-contiguous slice."""
+        full_buffer = np.zeros((20, chip.outputs), dtype=np.int32)
+        sliced = full_buffer[::2]  # Every other row is non-contiguous
+        with pytest.raises(ValueError, match="contiguous"):
+            chip.generate_into(sliced)
+
+    def test_3d_array(self, chip):
+        """Test error with 3D array."""
+        buffer = np.zeros((10, chip.outputs, 2), dtype=np.int32)
+        with pytest.raises(ValueError, match="1D or 2D"):
+            chip.generate_into(buffer)
+
+    def test_readonly_buffer(self, chip):
+        """Test error with read-only buffer."""
+        buffer = np.zeros((10, chip.outputs), dtype=np.int32)
+        buffer.flags.writeable = False
+        with pytest.raises((ValueError, BufferError)):
+            chip.generate_into(buffer)

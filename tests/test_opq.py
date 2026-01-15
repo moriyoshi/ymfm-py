@@ -5,6 +5,7 @@ OPQ (FM Operator Type-Q) chips include:
 - YM3533 (OPQ variant) - 8 FM channels, 2 operators (arcade)
 """
 
+import numpy as np
 import pytest
 from conftest import ChipTestHelper
 
@@ -180,3 +181,24 @@ class TestOPQCommon:
         for _ in range(5):
             opq_chip.reset()
             opq_chip.generate(10)
+
+    def test_generate_into(self, opq_chip):
+        """Test generate_into method."""
+        ChipTestHelper.test_generate_into(opq_chip)
+
+    def test_generate_into_matches_generate(self, opq_chip_name):
+        """Test that generate_into produces same output as generate."""
+        chip_class, clock, _ = OPQ_CHIPS[opq_chip_name]
+        ChipTestHelper.test_generate_into_matches_generate(chip_class, clock)
+
+    def test_generate_into_zero_samples(self, opq_chip):
+        """Test generate_into with zero-length buffer."""
+        buffer = np.zeros((0, opq_chip.outputs), dtype=np.int32)
+        result = opq_chip.generate_into(buffer)
+        assert result == 0
+
+    def test_generate_into_large_buffer(self, opq_chip):
+        """Test generate_into with large buffer."""
+        buffer = np.zeros((10000, opq_chip.outputs), dtype=np.int32)
+        result = opq_chip.generate_into(buffer)
+        assert result == 10000

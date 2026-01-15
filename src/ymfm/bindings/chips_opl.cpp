@@ -3,6 +3,11 @@
 
 namespace ymfm_py {
 
+// helper function for working around a ymfm bug
+template<typename T> constexpr uint32_t get_outputs() {
+    return T::fm_engine::OUTPUTS > T::OUTPUTS ? T::fm_engine::OUTPUTS : T::OUTPUTS;
+}
+
 // Stub wrapper classes for OPL family chips
 // These wrappers manage the interface lifetime and provide a clean Python API
 
@@ -10,7 +15,7 @@ namespace ymfm_py {
 
 class YM3526Chip {
 public:
-    static constexpr uint32_t OUTPUTS = ymfm::ym3526::OUTPUTS;
+    static constexpr uint32_t OUTPUTS = get_outputs<ymfm::ym3526>();
     static constexpr const char* CHIP_NAME = "YM3526";
     static constexpr const char* CHIP_DESCRIPTION = "OPL - 9 FM channels, mono output";
 
@@ -35,6 +40,10 @@ public:
         return generate_samples<ymfm::ym3526, OUTPUTS>(m_chip, num_samples);
     }
 
+    uint32_t generate_into(py::buffer buffer) {
+        return generate_samples_into<ymfm::ym3526, OUTPUTS>(m_chip, buffer);
+    }
+
     uint32_t sample_rate() const { return m_chip.sample_rate(m_clock); }
     uint32_t clock() const { return m_clock; }
 
@@ -54,7 +63,7 @@ constexpr const char* YM3526Chip::CHIP_DESCRIPTION;
 
 class Y8950Chip {
 public:
-    static constexpr uint32_t OUTPUTS = ymfm::y8950::OUTPUTS;
+    static constexpr uint32_t OUTPUTS = get_outputs<ymfm::y8950>();
     static constexpr const char* CHIP_NAME = "Y8950";
     static constexpr const char* CHIP_DESCRIPTION = "MSX-Audio - 9 FM channels + ADPCM, mono output";
 
@@ -79,6 +88,10 @@ public:
         return generate_samples<ymfm::y8950, OUTPUTS>(m_chip, num_samples);
     }
 
+    uint32_t generate_into(py::buffer buffer) {
+        return generate_samples_into<ymfm::y8950, OUTPUTS>(m_chip, buffer);
+    }
+
     uint32_t sample_rate() const { return m_chip.sample_rate(m_clock); }
     uint32_t clock() const { return m_clock; }
 
@@ -98,7 +111,7 @@ constexpr const char* Y8950Chip::CHIP_DESCRIPTION;
 
 class YM3812Chip {
 public:
-    static constexpr uint32_t OUTPUTS = ymfm::ym3812::OUTPUTS;
+    static constexpr uint32_t OUTPUTS = get_outputs<ymfm::ym3812>();
     static constexpr const char* CHIP_NAME = "YM3812";
     static constexpr const char* CHIP_DESCRIPTION = "OPL2 - 9 FM channels, 4 waveforms, mono output (Sound Blaster)";
 
@@ -123,6 +136,10 @@ public:
         return generate_samples<ymfm::ym3812, OUTPUTS>(m_chip, num_samples);
     }
 
+    uint32_t generate_into(py::buffer buffer) {
+        return generate_samples_into<ymfm::ym3812, OUTPUTS>(m_chip, buffer);
+    }
+
     uint32_t sample_rate() const { return m_chip.sample_rate(m_clock); }
     uint32_t clock() const { return m_clock; }
 
@@ -142,7 +159,7 @@ constexpr const char* YM3812Chip::CHIP_DESCRIPTION;
 
 class YMF262Chip {
 public:
-    static constexpr uint32_t OUTPUTS = ymfm::ymf262::OUTPUTS;
+    static constexpr uint32_t OUTPUTS = get_outputs<ymfm::ymf262>();
     static constexpr const char* CHIP_NAME = "YMF262";
     static constexpr const char* CHIP_DESCRIPTION = "OPL3 - 18 FM channels, 8 waveforms, 4-channel output (Sound Blaster Pro/16)";
 
@@ -168,6 +185,10 @@ public:
         return generate_samples<ymfm::ymf262, OUTPUTS>(m_chip, num_samples);
     }
 
+    uint32_t generate_into(py::buffer buffer) {
+        return generate_samples_into<ymfm::ymf262, OUTPUTS>(m_chip, buffer);
+    }
+
     uint32_t sample_rate() const { return m_chip.sample_rate(m_clock); }
     uint32_t clock() const { return m_clock; }
 
@@ -187,7 +208,7 @@ constexpr const char* YMF262Chip::CHIP_DESCRIPTION;
 
 class YM2413Chip {
 public:
-    static constexpr uint32_t OUTPUTS = ymfm::ym2413::OUTPUTS;
+    static constexpr uint32_t OUTPUTS = get_outputs<ymfm::ym2413>();
     static constexpr const char* CHIP_NAME = "YM2413";
     static constexpr const char* CHIP_DESCRIPTION = "OPLL - 9 FM channels, 15 preset instruments, mono output";
 
@@ -212,6 +233,10 @@ public:
         return generate_samples<ymfm::ym2413, OUTPUTS>(m_chip, num_samples);
     }
 
+    uint32_t generate_into(py::buffer buffer) {
+        return generate_samples_into<ymfm::ym2413, OUTPUTS>(m_chip, buffer);
+    }
+
     uint32_t sample_rate() const { return m_chip.sample_rate(m_clock); }
     uint32_t clock() const { return m_clock; }
 
@@ -233,7 +258,7 @@ constexpr const char* YM2413Chip::CHIP_DESCRIPTION;
 
 class YMF289BChip {
 public:
-    static constexpr uint32_t OUTPUTS = ymfm::ymf289b::OUTPUTS;
+    static constexpr uint32_t OUTPUTS = get_outputs<ymfm::ymf289b>();
     static constexpr const char* CHIP_NAME = "YMF289B";
     static constexpr const char* CHIP_DESCRIPTION = "OPL3L - OPL3 variant with 2-channel stereo output";
 
@@ -260,6 +285,10 @@ public:
         return generate_samples<ymfm::ymf289b, OUTPUTS>(m_chip, num_samples);
     }
 
+    uint32_t generate_into(py::buffer buffer) {
+        return generate_samples_into<ymfm::ymf289b, OUTPUTS>(m_chip, buffer);
+    }
+
     uint32_t sample_rate() const { return m_chip.sample_rate(m_clock); }
     uint32_t clock() const { return m_clock; }
 
@@ -279,7 +308,7 @@ constexpr const char* YMF289BChip::CHIP_DESCRIPTION;
 
 class YMF278BChip {
 public:
-    static constexpr uint32_t OUTPUTS = ymfm::ymf278b::OUTPUTS;
+    static constexpr uint32_t OUTPUTS = get_outputs<ymfm::ymf278b>();
     static constexpr const char* CHIP_NAME = "YMF278B";
     static constexpr const char* CHIP_DESCRIPTION = "OPL4 - OPL3 + wavetable PCM, 6-channel output";
 
@@ -308,6 +337,10 @@ public:
         return generate_samples<ymfm::ymf278b, OUTPUTS>(m_chip, num_samples);
     }
 
+    uint32_t generate_into(py::buffer buffer) {
+        return generate_samples_into<ymfm::ymf278b, OUTPUTS>(m_chip, buffer);
+    }
+
     uint32_t sample_rate() const { return m_chip.sample_rate(m_clock); }
     uint32_t clock() const { return m_clock; }
 
@@ -327,7 +360,7 @@ constexpr const char* YMF278BChip::CHIP_DESCRIPTION;
 
 class YM2423Chip {
 public:
-    static constexpr uint32_t OUTPUTS = ymfm::ym2423::OUTPUTS;
+    static constexpr uint32_t OUTPUTS = get_outputs<ymfm::ym2423>();
     static constexpr const char* CHIP_NAME = "YM2423";
     static constexpr const char* CHIP_DESCRIPTION = "OPLL variant - 9 FM channels with alternate preset instruments";
 
@@ -352,6 +385,10 @@ public:
         return generate_samples<ymfm::ym2423, OUTPUTS>(m_chip, num_samples);
     }
 
+    uint32_t generate_into(py::buffer buffer) {
+        return generate_samples_into<ymfm::ym2423, OUTPUTS>(m_chip, buffer);
+    }
+
     uint32_t sample_rate() const { return m_chip.sample_rate(m_clock); }
     uint32_t clock() const { return m_clock; }
 
@@ -371,7 +408,7 @@ constexpr const char* YM2423Chip::CHIP_DESCRIPTION;
 
 class YMF281Chip {
 public:
-    static constexpr uint32_t OUTPUTS = ymfm::ymf281::OUTPUTS;
+    static constexpr uint32_t OUTPUTS = get_outputs<ymfm::ymf281>();
     static constexpr const char* CHIP_NAME = "YMF281";
     static constexpr const char* CHIP_DESCRIPTION = "OPLLP - OPLL variant with alternate preset instruments";
 
@@ -396,6 +433,10 @@ public:
         return generate_samples<ymfm::ymf281, OUTPUTS>(m_chip, num_samples);
     }
 
+    uint32_t generate_into(py::buffer buffer) {
+        return generate_samples_into<ymfm::ymf281, OUTPUTS>(m_chip, buffer);
+    }
+
     uint32_t sample_rate() const { return m_chip.sample_rate(m_clock); }
     uint32_t clock() const { return m_clock; }
 
@@ -415,7 +456,7 @@ constexpr const char* YMF281Chip::CHIP_DESCRIPTION;
 
 class DS1001Chip {
 public:
-    static constexpr uint32_t OUTPUTS = ymfm::ds1001::OUTPUTS;
+    static constexpr uint32_t OUTPUTS = get_outputs<ymfm::ds1001>();
     static constexpr const char* CHIP_NAME = "DS1001";
     static constexpr const char* CHIP_DESCRIPTION = "VRC7 - Konami OPLL variant used in NES games";
 
@@ -438,6 +479,10 @@ public:
 
     py::memoryview generate(uint32_t num_samples) {
         return generate_samples<ymfm::ds1001, OUTPUTS>(m_chip, num_samples);
+    }
+
+    uint32_t generate_into(py::buffer buffer) {
+        return generate_samples_into<ymfm::ds1001, OUTPUTS>(m_chip, buffer);
     }
 
     uint32_t sample_rate() const { return m_chip.sample_rate(m_clock); }
@@ -475,6 +520,13 @@ constexpr const char* DS1001Chip::CHIP_DESCRIPTION;
         "    num_samples: Number of samples to generate (default: 1)\n\n" \
         "Returns:\n" \
         "    memoryview of int32 with interleaved samples (length = num_samples * outputs)") \
+    .def("generate_into", &cls::generate_into, py::arg("buffer"), \
+        "Generate audio samples into a provided buffer.\n\n" \
+        "Args:\n" \
+        "    buffer: Writable buffer with int32 dtype. Can be 1D (length must be\n" \
+        "            divisible by outputs) or 2D with shape (N, outputs).\n\n" \
+        "Returns:\n" \
+        "    Number of samples generated") \
     .def_property_readonly("sample_rate", &cls::sample_rate, "Output sample rate in Hz") \
     .def_property_readonly("clock", &cls::clock, "Input clock frequency in Hz") \
     .def_property_readonly("outputs", [](const cls&) { return cls::OUTPUTS; }, "Number of output channels") \
