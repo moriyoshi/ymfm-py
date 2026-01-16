@@ -145,21 +145,22 @@ class VgmChip:
 
     def generate(self, output_start: int, output_step: int) -> tuple:
         """Generate samples and return (left, right) output (per-sample version)."""
-        addr1, addr2 = 0xFFFF, 0xFFFF
-        data1, data2 = 0, 0
-
         # Process queued writes
         if self.queue:
             reg, val = self.queue.pop(0)
-            addr1 = 0 + 2 * ((reg >> 8) & 3)
-            data1 = reg & 0xFF
-            addr2 = addr1 + 1
-            data2 = val
-
-        # Write to the chip
-        if addr1 != 0xFFFF:
-            self.chip.write(addr1, data1)
-            self.chip.write(addr2, data2)
+            if self.chip_type == ChipType.YM2149:
+                # YM2149 uses offset 0 for address latch, offset 2 for data write
+                # (offset 1 is inactive and does nothing!)
+                self.chip.write(0, reg & 0xFF)
+                self.chip.write(2, val)
+            else:
+                # Other chips use addr/addr+1 pattern
+                addr1 = 0 + 2 * ((reg >> 8) & 3)
+                data1 = reg & 0xFF
+                addr2 = addr1 + 1
+                data2 = val
+                self.chip.write(addr1, data1)
+                self.chip.write(addr2, data2)
 
         # Generate at the appropriate sample rate
         while self.pos <= output_start:
@@ -323,6 +324,15 @@ class VgmPlayer:
             else:
                 chip = chip_class(clock=clock_val)
             chip.reset()
+
+            # Initialize YM2149/AY8910 mixer register to sensible default
+            # Many VGM files don't set register 0x07, leaving it at 0x00 which
+            # enables both tone AND noise (they get ANDed together).
+            # Default to 0x38 = noise disabled, all tones enabled.
+            if chip_type == ChipType.YM2149:
+                chip.write(0, 0x07)  # Select mixer register
+                chip.write(2, 0x38)  # Disable noise, enable tones
+
             self.chips.append(
                 VgmChip(
                     chip_type=chip_type,
@@ -982,6 +992,10 @@ def write_wav(filename: str, sample_rate: int, samples: np.ndarray):
         print("Warning: No samples to write", file=sys.stderr)
         return
 
+    # Remove DC offset (important for PSG chips that output unsigned values)
+    samples = samples.astype(np.float64)
+    samples -= np.mean(samples, axis=0)
+
     # Normalize to 16-bit range
     max_val = np.max(np.abs(samples))
     if max_val == 0:
@@ -989,7 +1003,7 @@ def write_wav(filename: str, sample_rate: int, samples: np.ndarray):
         max_val = 1
 
     # Scale to 16-bit with some headroom
-    samples_16 = (samples * 26000 // max_val).astype(np.int16)
+    samples_16 = (samples * 26000 / max_val).astype(np.int16)
 
     # Write WAV file
     with wave.open(filename, "wb") as wav:
